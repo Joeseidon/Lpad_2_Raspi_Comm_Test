@@ -91,41 +91,6 @@ void initI2CFIFO(void);
 void decodeMsg(void);
 __interrupt void i2cFIFOISR(void);
 
-void decodeMsg(void)
-{
-    //define temp variables 
-    uint16_t msbs = 0;
-    uint16_t lsbs = 0;
-    uint16_t temp = 0;
-    
-    //determine freq
-    msbs = rData[3];
-    lsbs = rData[4];
-    
-    freq = ((msbs << 8) | lsbs);
-    
-    //determine gain
-    msbs = rData[6];
-    lsbs = rData[7];
-    
-    temp = ((msbs << 8) | lsbs);
-    gain = temp/10.0; //accounts for alterations made during sending from master
-    
-    //determine offset
-    msbs = rData[9];
-    lsbs = rData[10];
-    temp = ((msbs << 8) | lsbs);
-    offset = temp/10.0;  //accounts for alterations made during sending from master
-    
-    //determine op_code
-    msbs = rData[12];
-    lsbs = rData[13];
-    temp = ((msbs << 8) | lsbs);
-    if(temp==1){
-        op_code = Idle;
-    }
-}
-
 //
 // Main
 //
@@ -320,6 +285,42 @@ void initI2CFIFO()
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
 }
 
+void decodeMsg(void)
+{
+    //define temp variables 
+    uint16_t msbs = 0;
+    uint16_t lsbs = 0;
+    uint16_t temp = 0;
+    
+    //determine freq
+    msbs = rData[3];
+    lsbs = rData[4];
+    
+    freq = ((msbs << 8) | lsbs);
+    
+    //determine gain
+    msbs = rData[6];
+    lsbs = rData[7];
+    
+    temp = ((msbs << 8) | lsbs);
+    gain = temp/10.0; //accounts for alterations made during sending from master
+    
+    //determine offset
+    msbs = rData[9];
+    lsbs = rData[10];
+    temp = ((msbs << 8) | lsbs);
+    offset = temp/10.0;  //accounts for alterations made during sending from master
+    
+    //determine op_code
+    msbs = rData[12];
+    lsbs = rData[13];
+    temp = ((msbs << 8) | lsbs);
+    if(temp==1){
+        op_code = Idle;
+    }
+}
+
 //
 // End of File
 //
+
