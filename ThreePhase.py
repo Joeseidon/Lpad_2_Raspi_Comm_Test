@@ -29,8 +29,8 @@ from PyQt4 import QtGui, QtCore, uic
 
 #I2C Connection
 #	Raspi		|		Target
-# 	pin3				pinA4
-#	pin5				pinA5
+# 	pin3				pin10
+#	pin5				pin9
 #	pin6				GND
 
 import smbus
@@ -138,13 +138,13 @@ class MyWindow(QtGui.QMainWindow):
 			self.writeSettingsToGenerator()
 			
 	def writeSettingsToGenerator(self,debug=False):
-		command = 0
+		self.command = 0
 		
 		self.msg_data = self.createMsg(freq=self.freq, gain=self.gain, offset=self.offset, op_code=self.op_code)
 		if debug:
 			print("Write Test Data: ",self.msg_data)
 		try:
-			bus.write_i2c_block_data(DEVICE_ADDR, command, self.msg_data)
+			self.bus.write_i2c_block_data(self.DEVICE_ADDR, self.command, self.msg_data)
 			self.ErrorLbl.setText("Status Msg: ")
 		except:
 			self.ErrorLbl.setText("Status Msg: I2C Write Error Please Check Connections")
@@ -159,19 +159,20 @@ class MyWindow(QtGui.QMainWindow):
 		#limited to 8bits transfered in each index(i.e: [0xFF,0x43 ....])
 		'''MSG structure:
 			data = [
-			0-2		: 	buffer
-			3-4		: 	FREQ: 4 is the top 8 bits and 5 is the lower 8 bits
+			0		: 	command
+			1-2		: 	buffer
+			3-4		: 	FREQ: 3 is the top 8 bits and 4 is the lower 8 bits
 			5		: 	buffer
-			6-7		:	GAIN: 7 top 8 bits, 8 lower 8 bits
+			6-7		:	GAIN: 6 top 8 bits, 7 lower 8 bits
 			8		:	buffer
-			9-10	:	OFFSET: 10 top 8 bits, 11 lower 8 bits
+			9-10	:	OFFSET: 9 top 8 bits, 10 lower 8 bits
 			11		:	buffer
 			12-13	:	op_code: indicates to the gen when to produce waveform
 			14-15	:	buffer
 			]
 			'''
 		
-		msg = [0,0,0]
+		msg = [0,0]
 		buf = 0
 		if debug:
 			print(msg)
