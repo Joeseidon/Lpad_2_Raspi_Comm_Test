@@ -61,9 +61,9 @@
 
 enum opCode
 {
-    Idle,
-    HandShake,
-    Update
+    Idle=1,
+    HandShake=2,
+    Update=3
 };
 
 //
@@ -77,14 +77,56 @@ uint16_t rDataPoint = 0;            // To keep track of where we are in the
 RX_ERROR = false;
 CMD_ERROR = false;
 
+//Data from master (watch values)
+float gain = 0.0;
+float offset = 0.0;
+uint16_t freq = 1;
+
 enum opCode op_code = Idle;
 
 //
 // Function Prototypes
 //
 void initI2CFIFO(void);
+void decodeMsg(void);
 __interrupt void i2cFIFOISR(void);
 
+void decodeMsg(void)
+{
+    //define temp variables 
+    uint16_t msbs = 0;
+    uint16_t lsbs = 0;
+    uint16_t temp = 0;
+    
+    //determine freq
+    msbs = rData[3];
+    lsbs = rData[4];
+    
+    temp = ((msbs << 8) | lsbs);
+    freq = temp;
+    
+    //determine gain
+    msbs = rData[6]; //Ignored here. Gain will always be in lower 8 bits
+    lsbs = rData[7];
+    
+    temp = lsbs;
+    gain = lsbs/10.0;//accounts for alterations made during sending from master
+    
+    //determine offset
+    msbs = rData[9]; //Ignored here. offset will always be in lower 8 bits
+    lsbs = rData[10];
+    
+    temp = lsbs;
+    offset = temp/10.0; //accounts for alterations made during sending from master
+    
+    //determine op_code
+    msbs = rData[12]; //Ignored here. op_code is a single digit and will be in lower 8 bits
+    lsbs = rData[13];
+    temp = lsbs;
+    if(temp==1){
+        op_code = Idle;
+    }
+}
 
 //
 // Main
@@ -202,7 +244,7 @@ void initI2CFIFO()
  __interrupt void i2cFIFOISR(void)
 {
     uint16_t i;
-
+    RX_ERROR = false;
     //
     // If receive FIFO interrupt flag is set, read data
     //
@@ -218,7 +260,7 @@ void initI2CFIFO()
         //
         for(i = 0; i < BUFFER_SIZE; i++)
         {
-            if(i==0)
+            /*if(i==0)
             {
                 if(rData[i] == 0){
                     //Command to perform handshake
@@ -227,8 +269,8 @@ void initI2CFIFO()
                 else if(rData[i] == 7){
                     op_code = Update;
                 }
-            }
-            else if(op_code == HandShake)
+            }*/
+            if(op_code == HandShake)
             {
                 if(rData[i] != handshake[i]){
                     //
@@ -244,7 +286,10 @@ void initI2CFIFO()
                 //do nothing with the data
             }
         }
-
+        if (RX_ERROR == false)
+        {
+            decodeMsg();
+        }
         //
         // Clear interrupt flag
         //
