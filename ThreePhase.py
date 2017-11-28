@@ -55,13 +55,72 @@ class MyWindow(QtGui.QMainWindow):
 		self.op_code = 1
 		
 		#Connect GUI features to functionality
-		
+			#connect frequency input
+		self.connect(self.FreqDial, QtCore.SIGNAL('valueChanged(int)'), self.updateFreq)
+			#connect gain input
+		self.OffsetInput.valueChanged.connect(self.updateOffset)
+			#connect offset input
+		self.GainInput.valueChanged.connect(self.updateGain)
+			#connect start button
+		self.Startbtn.clicked.connect(self.startBtnPress)
+			#connect stop button
+		self.Stopbtn.clicked.connect(self.stopBtnPress)
 		
 		#Create I2C comm
 		self.DEVICE_BUS = 1
 		self.DEVICE_ADDR = 0x08
 		self.bus = smbus.SMBus(self.DEVICE_BUS)
 		
+	def startBtnPress(self):
+		#udpate op_code 
+		
+		#set global update value
+		
+		#disable startBtn and enable stopBtn
+		
+	def stopBtnPress(self):
+		#update op_code
+		
+		#set global update value
+		
+		#disable stopBtn and enable startBtn
+		
+	def updateFreq(self):
+		#grab current dial value 
+		
+		#save that value locally
+		
+		#update LCD display to this value
+		
+		#set global update value so that on timer experation new data is sent
+		self.dataHasChagned = True
+		
+	def updateOffset(self):
+		#grab current spin box value
+		
+		#save that value locally
+		
+		#set global update value so that on timer experation new data is sent
+		self.dataHasChagned = True
+		
+	def updateGain(self):
+		#grab current spin box value
+		
+		#save that value locally
+		
+		#set global update value so that on timer experation new data is sent
+		self.dataHasChagned = True
+		
+	def timerExperation(self):
+		#every experation of the timer (as defined by update_freq)
+		#this function will run. If udpates have been made to any of the 
+		#four local parameters (freq, gain, offset, op_code)
+		#a new message will be sent to the launchpad via the I2C 
+		#interface to make these updates.
+		
+		if(self.dataHasChanged):
+			self.dataHasChanged = False
+			
 	def writeSettingsToGenerator(self,debug=False):
 		command = 0
 		
