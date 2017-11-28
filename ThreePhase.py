@@ -54,6 +54,11 @@ class MyWindow(QtGui.QMainWindow):
 		self.offset = 0
 		self.op_code = 1 #idle
 		
+		#Create necessary local vars
+		self.update_freq = 1000 #time in msec for timer experation
+		self.msg_data = []
+		self.dataHasChanged = False
+		
 		#Connect GUI features to functionality
 			#connect frequency input
 		self.connect(self.FreqDial, QtCore.SIGNAL('valueChanged(int)'), self.updateFreq)
@@ -70,13 +75,22 @@ class MyWindow(QtGui.QMainWindow):
 		#Create I2C comm
 		self.DEVICE_BUS = 1
 		self.DEVICE_ADDR = 0x08
-		self.bus = smbus.SMBus(self.DEVICE_BUS)
+		try:
+			self.bus = smbus.SMBus(self.DEVICE_BUS)
+		except:
+			self.ErrorLbl.setText("Status Msg: I2C Connection Error Please Check Connections and Restart")
+			
+		#Create update timer
+		self.timer = QtCore.QTimer()
+		self.timer.setInterval(self.update_freq)
+		self.timer.timeout.connect(self.timerExperation)
+		self.timer.start()
 		
 	def startBtnPress(self):
 		#udpate op_code 
 		self.op_code = 2 #start
 		#set global update value
-		self.dataHasChagned = True
+		self.dataHasChanged = True
 		#disable startBtn and enable stopBtn
 		self.Stopbtn.setEnabled(True)
 		self.Startbtn.setEnabled(False)
@@ -85,7 +99,7 @@ class MyWindow(QtGui.QMainWindow):
 		#update op_code
 		self.op_code = 3 #stop, cleanup, and then idle
 		#set global update value
-		self.dataHasChagned = True
+		self.dataHasChanged = True
 		#disable stopBtn and enable startBtn
 		self.Startbtn.setEnabled(True)
 		self.Stopbtn.setEnabled(False)
@@ -96,19 +110,19 @@ class MyWindow(QtGui.QMainWindow):
 		#update LCD display to this value
 		self.FreqLCD.display(self.freq)
 		#set global update value so that on timer experation new data is sent
-		self.dataHasChagned = True
+		self.dataHasChanged = True
 		
 	def updateOffset(self):
 		#grab current spin box value
 		self.offset=self.OffsetInput.value()		
 		#set global update value so that on timer experation new data is sent
-		self.dataHasChagned = True
+		self.dataHasChanged = True
 		
 	def updateGain(self):
 		#grab current spin box value
 		self.gain=self.GainInput.value()		
 		#set global update value so that on timer experation new data is sent
-		self.dataHasChagned = True
+		self.dataHasChanged = True
 		
 	def timerExperation(self):
 		#every experation of the timer (as defined by update_freq)
@@ -116,7 +130,6 @@ class MyWindow(QtGui.QMainWindow):
 		#four local parameters (freq, gain, offset, op_code)
 		#a new message will be sent to the launchpad via the I2C 
 		#interface to make these updates.
-		
 		if(self.dataHasChanged):
 			#reset flag
 			self.dataHasChanged = False
@@ -127,19 +140,22 @@ class MyWindow(QtGui.QMainWindow):
 	def writeSettingsToGenerator(self,debug=False):
 		command = 0
 		
-		msg_data = createMsg(freq=self.freq, gain=self.gain, offset=self.offset, op_code=self.op_code)
+		self.msg_data = self.createMsg(freq=self.freq, gain=self.gain, offset=self.offset, op_code=self.op_code)
 		if debug:
-			print("Write Test Data: ",msg_data)
-	
-		bus.write_i2c_block_data(DEVICE_ADDR, command, msg_data)
-		
+			print("Write Test Data: ",self.msg_data)
+		try:
+			bus.write_i2c_block_data(DEVICE_ADDR, command, self.msg_data)
+			self.ErrorLbl.setText("Status Msg: ")
+		except:
+			self.ErrorLbl.setText("Status Msg: I2C Write Error Please Check Connections")
+			
 	def dataConversionForTransfer(self,value):
 		r = "{0:#0{1}x}".format(value,6)	
 		topBits = int(r[:-2], 16)
 		lowerBits = int("0x"+r[4:], 16)
 		return topBits, lowerBits
 	
-	def createMsg(freq=5000, gain=0.8003, offset=0, op_code=1,debug=False):
+	def createMsg(self,freq=5000, gain=0.8003, offset=0, op_code=1,debug=False):
 		#limited to 8bits transfered in each index(i.e: [0xFF,0x43 ....])
 		'''MSG structure:
 			data = [
@@ -187,6 +203,9 @@ class MyWindow(QtGui.QMainWindow):
 			print(len(msg))
 		
 		return msg
+		
+	def closeEvent(self,event):
+		self.bus.close()
 		
 
 if __name__ == '__main__':
