@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>203</height>
+    <width>426</width>
+    <height>249</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>3 Phase Function Generator</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget_4">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>381</width>
-     <height>181</height>
+     <width>401</width>
+     <height>221</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -29,6 +29,12 @@
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QDoubleSpinBox" name="GainInput">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>40</height>
+           </size>
+          </property>
           <property name="decimals">
            <number>1</number>
           </property>
@@ -52,7 +58,7 @@
            <bool>false</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignBottom|Qt::AlignHCenter</set>
           </property>
          </widget>
         </item>
@@ -69,6 +75,12 @@
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QDoubleSpinBox" name="OffsetInput">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>40</height>
+           </size>
+          </property>
           <property name="decimals">
            <number>1</number>
           </property>
@@ -92,7 +104,7 @@
            <bool>false</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignBottom|Qt::AlignHCenter</set>
           </property>
          </widget>
         </item>
@@ -102,8 +114,20 @@
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLCDNumber" name="FreqLCD">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>40</height>
+           </size>
+          </property>
           <property name="smallDecimalPoint">
            <bool>false</bool>
+          </property>
+          <property name="segmentStyle">
+           <enum>QLCDNumber::Filled</enum>
+          </property>
+          <property name="intValue" stdset="0">
+           <number>1000</number>
           </property>
          </widget>
         </item>
@@ -115,8 +139,14 @@
           <property name="singleStep">
            <number>100</number>
           </property>
+          <property name="pageStep">
+           <number>100</number>
+          </property>
           <property name="value">
-           <number>500</number>
+           <number>1000</number>
+          </property>
+          <property name="tracking">
+           <bool>true</bool>
           </property>
           <property name="invertedAppearance">
            <bool>false</bool>

@@ -52,7 +52,7 @@ class MyWindow(QtGui.QMainWindow):
 		self.freq = 1000 #hz
 		self.gain = 0.8003
 		self.offset = 0
-		self.op_code = 1
+		self.op_code = 1 #idle
 		
 		#Connect GUI features to functionality
 			#connect frequency input
@@ -65,6 +65,7 @@ class MyWindow(QtGui.QMainWindow):
 		self.Startbtn.clicked.connect(self.startBtnPress)
 			#connect stop button
 		self.Stopbtn.clicked.connect(self.stopBtnPress)
+		self.Stopbtn.setEnabled(False)
 		
 		#Create I2C comm
 		self.DEVICE_BUS = 1
@@ -73,41 +74,39 @@ class MyWindow(QtGui.QMainWindow):
 		
 	def startBtnPress(self):
 		#udpate op_code 
-		
+		self.op_code = 2 #start
 		#set global update value
-		
+		self.dataHasChagned = True
 		#disable startBtn and enable stopBtn
+		self.Stopbtn.setEnabled(True)
+		self.Startbtn.setEnabled(False)
 		
 	def stopBtnPress(self):
 		#update op_code
-		
+		self.op_code = 3 #stop, cleanup, and then idle
 		#set global update value
-		
+		self.dataHasChagned = True
 		#disable stopBtn and enable startBtn
+		self.Startbtn.setEnabled(True)
+		self.Stopbtn.setEnabled(False)
 		
 	def updateFreq(self):
 		#grab current dial value 
-		
-		#save that value locally
-		
+		self.freq = self.FreqDial.sliderPosition()
 		#update LCD display to this value
-		
+		self.FreqLCD.display(self.freq)
 		#set global update value so that on timer experation new data is sent
 		self.dataHasChagned = True
 		
 	def updateOffset(self):
 		#grab current spin box value
-		
-		#save that value locally
-		
+		self.offset=self.OffsetInput.value()		
 		#set global update value so that on timer experation new data is sent
 		self.dataHasChagned = True
 		
 	def updateGain(self):
 		#grab current spin box value
-		
-		#save that value locally
-		
+		self.gain=self.GainInput.value()		
 		#set global update value so that on timer experation new data is sent
 		self.dataHasChagned = True
 		
@@ -119,7 +118,11 @@ class MyWindow(QtGui.QMainWindow):
 		#interface to make these updates.
 		
 		if(self.dataHasChanged):
+			#reset flag
 			self.dataHasChanged = False
+			
+			#send new settings to the launchpad
+			self.writeSettingsToGenerator()
 			
 	def writeSettingsToGenerator(self,debug=False):
 		command = 0
