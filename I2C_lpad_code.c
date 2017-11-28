@@ -102,27 +102,25 @@ void decodeMsg(void)
     msbs = rData[3];
     lsbs = rData[4];
     
-    temp = ((msbs << 8) | lsbs);
-    freq = temp;
+    freq = ((msbs << 8) | lsbs);
     
     //determine gain
-    msbs = rData[6]; //Ignored here. Gain will always be in lower 8 bits
+    msbs = rData[6];
     lsbs = rData[7];
     
-    temp = lsbs;
-    gain = lsbs/10.0;//accounts for alterations made during sending from master
+    temp = ((msbs << 8) | lsbs);
+    gain = temp/10.0; //accounts for alterations made during sending from master
     
     //determine offset
-    msbs = rData[9]; //Ignored here. offset will always be in lower 8 bits
+    msbs = rData[9];
     lsbs = rData[10];
-    
-    temp = lsbs;
-    offset = temp/10.0; //accounts for alterations made during sending from master
+    temp = ((msbs << 8) | lsbs);
+    offset = temp/10.0;  //accounts for alterations made during sending from master
     
     //determine op_code
-    msbs = rData[12]; //Ignored here. op_code is a single digit and will be in lower 8 bits
+    msbs = rData[12];
     lsbs = rData[13];
-    temp = lsbs;
+    temp = ((msbs << 8) | lsbs);
     if(temp==1){
         op_code = Idle;
     }
