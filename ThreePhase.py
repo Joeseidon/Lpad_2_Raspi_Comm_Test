@@ -77,14 +77,18 @@ class MyWindow(QtGui.QMainWindow):
 		self.DEVICE_ADDR = 0x08
 		try:
 			self.bus = smbus.SMBus(self.DEVICE_BUS)
+			self.updateSysStatus("Connected")
 		except:
-			self.ErrorLbl.setText("Status Msg: I2C Connection Error Please Check Connections and Restart")
+			self.updateSysStatus("I2C Connection Error Please Check Connections and Restart")
 			
 		#Create update timer
 		self.timer = QtCore.QTimer()
 		self.timer.setInterval(self.update_freq)
 		self.timer.timeout.connect(self.timerExperation)
 		self.timer.start()
+	
+	def updateSysStatus(self, msg):
+		self.ErrorLbl.setText("Status: "+msg)
 		
 	def startBtnPress(self):
 		#udpate op_code 
@@ -145,9 +149,8 @@ class MyWindow(QtGui.QMainWindow):
 			print("Write Test Data: ",self.msg_data)
 		try:
 			self.bus.write_i2c_block_data(self.DEVICE_ADDR, self.command, self.msg_data)
-			self.ErrorLbl.setText("Status Msg: ")
 		except:
-			self.ErrorLbl.setText("Status Msg: I2C Write Error Please Check Connections")
+			self.updateSysStatus("I2C Write Error. Please Check Connections")
 			
 	def dataConversionForTransfer(self,value):
 		r = "{0:#0{1}x}".format(value,6)	

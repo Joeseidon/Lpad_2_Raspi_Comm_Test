@@ -262,7 +262,7 @@
     <item>
      <widget class="QLabel" name="ErrorLbl">
       <property name="text">
-       <string>Status Msg:</string>
+       <string>Status:</string>
       </property>
      </widget>
     </item>
