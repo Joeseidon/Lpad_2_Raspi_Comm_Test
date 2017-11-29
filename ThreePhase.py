@@ -78,6 +78,8 @@ class MyWindow(QtGui.QMainWindow):
 		self.Channel1_scale.valueChanged.connect(self.channelShiftUpdate)
 		self.Channel2_scale.valueChanged.connect(self.channelShiftUpdate)
 		self.Channel3_scale.valueChanged.connect(self.channelShiftUpdate)
+			#connect reset button
+		self.ResetBtn.clicked.connect(self.resetGenData)
 		
 		#Create I2C comm
 		self.DEVICE_BUS = 1
@@ -94,6 +96,21 @@ class MyWindow(QtGui.QMainWindow):
 		self.timer.timeout.connect(self.timerExperation)
 		self.timer.start()
 	
+	def resetGenData(self):
+		#reset 3 phase generator settings
+		self.FreqDial.setValue(1000)
+		self.FreqLCD.display(self.freq)
+		self.OffsetInput.setValue(0.0)
+		self.GainInput.setValue(0.8)
+		self.Startbtn.setEnabled(True)
+		self.Stopbtn.setEnabled(False)
+		self.Channel1_scale.setValue(0)
+		self.Channel2_scale.setValue(0)
+		self.Channel2_scale.setValue(0)
+		self.op_code = 1
+		#set global update value
+		self.dataHasChanged = True
+		
 	def channelShiftUpdate(self):
 		#update all channel shift values
 		self.channel_1_shift_value = self.Channel1_scale.value()
@@ -188,7 +205,7 @@ class MyWindow(QtGui.QMainWindow):
 			return 2
 	
 	def createMsg(self,
-					freq			= 5000, 
+					freq			= 1000, 
 					gain			= 0.8003, 
 					offset			= 0, 
 					op_code			= 1,
