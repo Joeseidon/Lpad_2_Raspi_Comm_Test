@@ -1,3 +1,4 @@
+
 //#############################################################################
 //
 // FILE:   3ChSgenTest.c
@@ -90,7 +91,7 @@ volatile struct DAC_REGS* DAC_PTR[4] = {0x0,&DacaRegs,&DacbRegs,&DaccRegs}; //DA
 
 //Waveform settings
 Uint32 samplingFreq_hz  = 200000;
-Uint32 outputFreq_hz    = 1000;
+Uint32 outputFreq_hz    = 2000;
 Uint32 maxOutputFreq_hz = 5000;
 float waveformGain      = 0.8003; // Range 0.0 -> 1.0
 float waveformOffset    = 0;      // Range -1.0 -> 1.0
@@ -107,6 +108,11 @@ SGENT_3 sgen = SGENT_3_DEFAULTS;
 Uint16 sgen_out1 = 0;
 Uint16 sgen_out2 = 0;
 Uint16 sgen_out3 = 0;
+
+int standardChOffsets[3] = {30000,32768,35000};
+uint16_t channel1_offset = 32768;
+uint16_t channel2_offset = 32768;
+uint16_t channel3_offset = 32768;
 
 //I2C Globals
 uint16_t rData[BUFFER_SIZE];                 // Send data buffer
@@ -127,6 +133,8 @@ static inline void setOffset(void);
 void configureDAC(void);
 void configureWaveform(void);
 interrupt void cpu_timer0_isr(void);
+void disableSignalGen(void);
+void channelShiftCodeToValue(int ch, uint16_t code);
 
 void initI2CFIFO(void);
 inline void decodeMsg(void);   //might be faster to put inline
@@ -221,6 +229,7 @@ void main(void)
     //
     EINT;
     ERTM;
+    
 
     while(1)
     {
@@ -233,7 +242,7 @@ void main(void)
             DELAY_US(1000);
         }
         if(op_code == Start){
-            Interrupt_enable(INT_TIMER0);
+            enableSignalGen();
             while(op_code == Start)
             {
                 setFreq();   // Set Output Frequency and Max Output Frequency
@@ -244,12 +253,7 @@ void main(void)
         if(op_code == Stop){
             //turn off sgen
             //To turn off just set all sgen outputs to 0 and disable timer0 interrupt
-            Interrupt_disable(INT_TIMER0);
-            //reset DACs
-            DAC_PTR[DACA]->DACVALS.all = 0;
-	        DAC_PTR[DACB]->DACVALS.all = 0;
-	        DAC_PTR[DACC]->DACVALS.all = 0;
-            
+            disableSignalGen();
             //change op_code to idle and wait for further instruction
             op_code = Idle;
         }
@@ -257,11 +261,7 @@ void main(void)
         if(op_code == PowerDown){
             //turn off sgen
             //To turn off just set all sgen outputs to 0 and disable timer0 interrupt
-            Interrupt_disable(INT_TIMER0);
-            //reset DACs
-            DAC_PTR[DACA]->DACVALS.all = 0;
-	        DAC_PTR[DACB]->DACVALS.all = 0;
-	        DAC_PTR[DACC]->DACVALS.all = 0;
+            disableSignalGen();
             //put system in low power mode and wait for wake commnad(Start)
             while(op_code != Start){
                 ;
@@ -309,6 +309,39 @@ static inline void setOffset(void)
 }
 
 //
+// enableSignalGen - Enables DAC outputs and starts generators timer interrupt
+void enableSignalGen(void)
+{
+    Interrupt_enable(INT_TIMER0);
+    //reset DACs and enable
+    EALLOW;
+    DAC_PTR[DACA]->DACVALS.all = 0;
+    DAC_PTR[DACB]->DACVALS.all = 0;
+    DAC_PTR[DACC]->DACVALS.all = 0;
+    DAC_PTR[DACA]->DACOUTEN.bit.DACOUTEN = 1;
+    DAC_PTR[DACB]->DACOUTEN.bit.DACOUTEN = 1;
+    DAC_PTR[DACC]->DACOUTEN.bit.DACOUTEN = 1;
+    DELAY_US(10); //Allow for buffered DAC to power up
+    EDIS;
+}
+//
+// disableSignalGen - Disables DAC outputs to avoid noise on the lines when sig not generated
+//
+void disableSignalGen(void)
+{
+    Interrupt_disable(INT_TIMER0);
+    //reset DACs and disable
+    EALLOW;
+    DAC_PTR[DACA]->DACVALS.all = 0;
+    DAC_PTR[DACB]->DACVALS.all = 0;
+    DAC_PTR[DACC]->DACVALS.all = 0;
+    DAC_PTR[DACA]->DACOUTEN.bit.DACOUTEN = 0;
+    DAC_PTR[DACB]->DACOUTEN.bit.DACOUTEN = 0;
+    DAC_PTR[DACC]->DACOUTEN.bit.DACOUTEN = 0;
+    DELAY_US(10); //Allow for buffered DAC to power up
+    EDIS;
+}
+//
 // configureDAC - Enable and configure DAC modules
 //
 void configureDAC(void)
@@ -319,22 +352,22 @@ void configureDAC(void)
 	//Configure DACA
 	//
 	DAC_PTR[DACA]->DACCTL.bit.DACREFSEL = REFERENCE;
-	DAC_PTR[DACA]->DACOUTEN.bit.DACOUTEN = 1;
-	DAC_PTR[DACA]->DACVALS.all = 0;
+	//DAC_PTR[DACA]->DACOUTEN.bit.DACOUTEN = 1;
+	//DAC_PTR[DACA]->DACVALS.all = 0;
 
 	//
 	//Configure DACB
 	//
 	DAC_PTR[DACB]->DACCTL.bit.DACREFSEL = REFERENCE;
-	DAC_PTR[DACB]->DACOUTEN.bit.DACOUTEN = 1;
-	DAC_PTR[DACB]->DACVALS.all = 0;
+	//DAC_PTR[DACB]->DACOUTEN.bit.DACOUTEN = 1;
+	//DAC_PTR[DACB]->DACVALS.all = 0;
 
 	//
 	//Configure DACC
 	//
 	DAC_PTR[DACC]->DACCTL.bit.DACREFSEL = REFERENCE;
-	DAC_PTR[DACC]->DACOUTEN.bit.DACOUTEN = 1;
-	DAC_PTR[DACC]->DACVALS.all = 0;
+	//DAC_PTR[DACC]->DACOUTEN.bit.DACOUTEN = 1;
+	//DAC_PTR[DACC]->DACVALS.all = 0;
 	
 	DELAY_US(10); //Allow for buffered DAC to power up
 	
@@ -369,9 +402,9 @@ interrupt void cpu_timer0_isr(void)
 	//
     // Scale next sine value
     //
-    sgen_out1 = (sgen.out1 + 32768) >> 4;
-    sgen_out2 = (sgen.out2 + 32768) >> 4;
-    sgen_out3 = (sgen.out3 + 32768) >> 4;
+    sgen_out1 = (sgen.out1 + channel1_offset) >> 4;
+    sgen_out2 = (sgen.out2 + channel2_offset) >> 4;
+    sgen_out3 = (sgen.out3 + channel3_offset) >> 4;
 
 	//
     // Compute next sine value
@@ -515,31 +548,38 @@ void decodeMsg(void)
     //define temp variables 
     uint16_t msbs = 0;
     uint16_t lsbs = 0;
-    uint16_t temp = 0;
+    int temp = 0;
     
     //determine freq
-    msbs = rData[3];
-    lsbs = rData[4];
+    msbs = rData[2];
+    lsbs = rData[3];
     
     outputFreq_hz = ((msbs << 8) | lsbs);
     
     //determine gain
-    msbs = rData[6];
+    /*msbs = rData[6];
     lsbs = rData[7];
     
-    temp = ((msbs << 8) | lsbs);
+    temp = ((msbs << 8) | lsbs);*/
+    temp = rData[5];
     waveformGain = temp/10.0; //accounts for alterations made during sending from master
     
     //determine offset
-    msbs = rData[9];
+    /*msbs = rData[9];
     lsbs = rData[10];
-    temp = ((msbs << 8) | lsbs);
-    waveformOffset = temp/10.0;  //accounts for alterations made during sending from master
+    temp = ((msbs << 8) | lsbs);*/
+    temp = rData[8];
+    if(rData[7] == 1)   //account for negative offset
+    {
+        temp=temp*-1;
+    }
+    waveformOffset = temp/10.0;//accounts for alterations made during sending from master
     
     //determine op_code
-    msbs = rData[12];
+    /*msbs = rData[12];
     lsbs = rData[13];
-    temp = ((msbs << 8) | lsbs);
+    temp = ((msbs << 8) | lsbs);*/
+    temp = rData[10];
     switch(temp)
     {
         case 1:
@@ -558,8 +598,27 @@ void decodeMsg(void)
             op_code = Idle;
             break;
     }
+    
+    //determine channel shifts
+    channelShiftDecode(1, rData[12]);
+    channelShiftDecode(2, rData[13]);
+    channelShiftDecode(3, rData[14]);
 }
 
+void channelShiftDecode(int ch, uint16_t code)
+{
+    switch(ch){
+        case 1:
+            channel1_offset = standardChOffsets[code];
+            break;
+        case 2:
+            channel2_offset = standardChOffsets[code];
+            break;
+        case 3:
+            channel3_offset = standardChOffsets[code];
+            break;
+    }
+}
 
 //
 // End of File
