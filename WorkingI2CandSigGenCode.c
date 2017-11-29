@@ -103,7 +103,6 @@ SGENTI_3 sgen = SGENTI_3_DEFAULTS;
 SGENT_3 sgen = SGENT_3_DEFAULTS;
 #endif
 
-
 //Sgen Channel Value Storage
 Uint16 sgen_out1 = 0;
 Uint16 sgen_out2 = 0;
@@ -115,16 +114,11 @@ uint16_t channel2_offset = 32768;
 uint16_t channel3_offset = 32768;
 
 //I2C Globals
-uint16_t rData[BUFFER_SIZE];                 // Send data buffer
+uint16_t rData[BUFFER_SIZE];    // Send data buffer
+
 //Error Flags
 bool RX_ERROR = false;
 bool CMD_ERROR = false;
-
-
-/*//TEMP DATA for master comm testing 
-float gain = 0.0;
-float offset = 0.0;
-uint16_t freq = 1;*/
 
 //Function Prototypes
 static inline void setFreq(void);
@@ -137,7 +131,7 @@ void disableSignalGen(void);
 void channelShiftCodeToValue(int ch, uint16_t code);
 
 void initI2CFIFO(void);
-inline void decodeMsg(void);   //might be faster to put inline
+inline void decodeMsg(void); 
 __interrupt void i2cFIFOISR(void);
 
 //
@@ -162,32 +156,31 @@ void main(void)
     Device_initGPIO();
 
 //
-    // Initialize PIE and clear PIE registers. Disables CPU interrupts.
-    //
+// Initialize PIE and clear PIE registers. Disables CPU interrupts.
+//
     Interrupt_initModule();
 
-    //
-    // Initialize the PIE vector table with pointers to the shell Interrupt
-    // Service Routines (ISR).
-    //
+//
+// Initialize the PIE vector table with pointers to the shell Interrupt
+// Service Routines (ISR).
+//
     Interrupt_initVectorTable();
 
-    //
-    // Interrupts that are used in this example are re-mapped to ISR functions
-    // found within this file.
-    //
-   
+//
+// Interrupts that are used in this example are re-mapped to ISR functions
+// found within this file.
+//
     Interrupt_register(INT_I2CA_FIFO, &i2cFIFOISR);
     Interrupt_register(INT_TIMER0, &cpu_timer0_isr);
    
-    //
-    // Set I2C use, initializing it for FIFO mode
-    //
+//
+// Set I2C use, initializing it for FIFO mode
+//
     initI2CFIFO();
 
-    //
-    // Initialize the data buffers
-    //
+//
+// Initialize the data buffers
+//
     uint16_t i;
     for(i = 0; i < BUFFER_SIZE; i++)
     {
@@ -219,14 +212,13 @@ void main(void)
     CpuTimer0Regs.TCR.all = 0x4000;
 
 //
-    // Enable interrupts required for this example
-    //
+// Enable interrupts required for this example
+//
     Interrupt_enable(INT_I2CA_FIFO);
-    //Interrupt_enable(INT_TIMER0);
-    
-    //
-    // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
-    //
+
+//
+// Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
+//
     EINT;
     ERTM;
     
@@ -236,9 +228,9 @@ void main(void)
         while(op_code == Idle)
         {
             //wait for op_code change from Master
-            //
-            //delay for 1ms to allow new op_code value to load
-            //
+        //
+        //Delay for 1ms to allow new op_code value to load
+        //
             DELAY_US(1000);
         }
         if(op_code == Start){
@@ -270,7 +262,6 @@ void main(void)
         
 	}
 }//End Main
-
 
 //
 // setFreq - Set the SINE frequency in SGEN
@@ -310,6 +301,7 @@ static inline void setOffset(void)
 
 //
 // enableSignalGen - Enables DAC outputs and starts generators timer interrupt
+//
 void enableSignalGen(void)
 {
     Interrupt_enable(INT_TIMER0);
@@ -352,22 +344,16 @@ void configureDAC(void)
 	//Configure DACA
 	//
 	DAC_PTR[DACA]->DACCTL.bit.DACREFSEL = REFERENCE;
-	//DAC_PTR[DACA]->DACOUTEN.bit.DACOUTEN = 1;
-	//DAC_PTR[DACA]->DACVALS.all = 0;
 
 	//
 	//Configure DACB
 	//
 	DAC_PTR[DACB]->DACCTL.bit.DACREFSEL = REFERENCE;
-	//DAC_PTR[DACB]->DACOUTEN.bit.DACOUTEN = 1;
-	//DAC_PTR[DACB]->DACVALS.all = 0;
 
 	//
 	//Configure DACC
 	//
 	DAC_PTR[DACC]->DACCTL.bit.DACREFSEL = REFERENCE;
-	//DAC_PTR[DACC]->DACOUTEN.bit.DACOUTEN = 1;
-	//DAC_PTR[DACC]->DACVALS.all = 0;
 	
 	DELAY_US(10); //Allow for buffered DAC to power up
 	
@@ -440,7 +426,6 @@ void initI2CFIFO()
     I2C_setConfig(I2CA_BASE, I2C_SLAVE_SEND_MODE);
     I2C_setBitCount(I2CA_BASE, I2C_BITCOUNT_8);
 
-    
     //
     // FIFO and interrupt configuration
     //
@@ -473,70 +458,12 @@ void initI2CFIFO()
         {
             rData[i] = I2C_getData(I2CA_BASE);
         }
-
-       /* //
-        // Check received data
-        //
-        for(i = 0; i < BUFFER_SIZE; i++)
-        {
-            if(i==0)
-            {
-                if(rData[i] == 0){
-                    //Command to perform handshake
-                    op_code = HandShake;
-                }
-                else if(rData[i] == 7){
-                    op_code = Update;
-                }
-            }
-            if(op_code == HandShake)
-            {
-                if(rData[i] != handshake[i]){
-                    //
-                    // Something went wrong. rData doesn't contain expected data.
-                    //
-                    RX_ERROR = true;
-                }
-            }
-            else if(op_code == Update){
-                //Decode rDate buffer and adjust global vars
-            }
-            else if(op_code == Idle){
-                //do nothing with the data
-            }
-        }
-        if (RX_ERROR == false)
-        {
-            decodeMsg();
-        }*/
-        
         decodeMsg();
         //
         // Clear interrupt flag
         //
         I2C_clearInterruptStatus(I2CA_BASE, I2C_INT_RXFF);
     }
-   /* //
-    // If transmit FIFO interrupt flag is set, put data in the buffer
-    //
-    else if((I2C_getInterruptStatus(I2CA_BASE) & I2C_INT_TXFF) != 0)
-    {
-        for(i = 0; i < BUFFER_SIZE; i++)
-        {
-            I2C_putData(I2CA_BASE, sData[i]);
-        }
-
-        //
-        // Send the start condition
-        //
-        I2C_sendStartCondition(I2CA_BASE);
-
-        //
-        // Clear interrupt flag
-        //
-        I2C_clearInterruptStatus(I2CA_BASE, I2C_INT_TXFF);
-    }*/
-
     //
     // Issue ACK
     //
@@ -553,21 +480,13 @@ void decodeMsg(void)
     //determine freq
     msbs = rData[2];
     lsbs = rData[3];
-    
     outputFreq_hz = ((msbs << 8) | lsbs);
     
     //determine gain
-    /*msbs = rData[6];
-    lsbs = rData[7];
-    
-    temp = ((msbs << 8) | lsbs);*/
     temp = rData[5];
     waveformGain = temp/10.0; //accounts for alterations made during sending from master
     
     //determine offset
-    /*msbs = rData[9];
-    lsbs = rData[10];
-    temp = ((msbs << 8) | lsbs);*/
     temp = rData[8];
     if(rData[7] == 1)   //account for negative offset
     {
@@ -576,9 +495,6 @@ void decodeMsg(void)
     waveformOffset = temp/10.0;//accounts for alterations made during sending from master
     
     //determine op_code
-    /*msbs = rData[12];
-    lsbs = rData[13];
-    temp = ((msbs << 8) | lsbs);*/
     temp = rData[10];
     switch(temp)
     {
@@ -623,3 +539,4 @@ void channelShiftDecode(int ch, uint16_t code)
 //
 // End of File
 //
+
