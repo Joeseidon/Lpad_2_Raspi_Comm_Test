@@ -49,7 +49,7 @@ class MyWindow(QtGui.QMainWindow):
 		self.move(qr.topLeft())
 		
 		#Create Vars to hold output values
-		self.freq = 1000 #hz
+		self.freq = 1000 #hz 
 		self.gain = 0.8003
 		self.offset = 0
 		self.op_code = 1 #idle
