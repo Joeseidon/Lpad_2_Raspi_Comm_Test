@@ -53,6 +53,9 @@ class MyWindow(QtGui.QMainWindow):
 		self.gain = 0.8003
 		self.offset = 0
 		self.op_code = 1 #idle
+		self.channel_1_shift_value = 0
+		self.channel_2_shift_value = 0
+		self.channel_3_shift_value = 0
 		
 		#Create necessary local vars
 		self.update_freq = 1000 #time in msec for timer experation
@@ -71,6 +74,10 @@ class MyWindow(QtGui.QMainWindow):
 			#connect stop button
 		self.Stopbtn.clicked.connect(self.stopBtnPress)
 		self.Stopbtn.setEnabled(False)
+			#connect channel shift 
+		self.Channel1_scale.valueChanged.connect(self.channelShiftUpdate)
+		self.Channel2_scale.valueChanged.connect(self.channelShiftUpdate)
+		self.Channel3_scale.valueChanged.connect(self.channelShiftUpdate)
 		
 		#Create I2C comm
 		self.DEVICE_BUS = 1
@@ -87,6 +94,14 @@ class MyWindow(QtGui.QMainWindow):
 		self.timer.timeout.connect(self.timerExperation)
 		self.timer.start()
 	
+	def channelShiftUpdate(self):
+		#update all channel shift values
+		self.channel_1_shift_value = self.Channel1_scale.value()
+		self.channel_2_shift_value = self.Channel2_scale.value()
+		self.channel_3_shift_value = self.Channel3_scale.value()
+		#set global update value
+		self.dataHasChanged = True
+		
 	def updateSysStatus(self, msg):
 		self.ErrorLbl.setText("Status: "+msg)
 		
@@ -157,56 +172,105 @@ class MyWindow(QtGui.QMainWindow):
 		topBits = int(r[:-2], 16)
 		lowerBits = int("0x"+r[4:], 16)
 		return topBits, lowerBits
+		
+	def channelShiftToCode(self, channel_val):
+		'''Channel Shift Codes to Pass Negatives
+			Shift Value 	|		Transmit Code
+				-1						0
+				 0						1
+				 1						2
+		'''
+		if(channel_val==-1):
+			return 0
+		elif(channel_val==0):
+			return 1
+		elif(channel_val==1):
+			return 2
 	
-	def createMsg(self,freq=5000, gain=0.8003, offset=0, op_code=1,debug=False):
-		#limited to 8bits transfered in each index(i.e: [0xFF,0x43 ....])
+	def createMsg(self,
+					freq			= 5000, 
+					gain			= 0.8003, 
+					offset			= 0, 
+					op_code			= 1,
+					channel1_shift 	= 0,
+					channel2_shift 	= 0,
+					channel3_shift 	= 0,
+					debug			= False):
+		#limited to 8bits transfered in each index(i.e: [0xFF,0x43 ....])			
 		'''MSG structure:
 			data = [
-			0		: 	command
-			1-2		: 	buffer
-			3-4		: 	FREQ: 3 is the top 8 bits and 4 is the lower 8 bits
-			5		: 	buffer
-			6-7		:	GAIN: 6 top 8 bits, 7 lower 8 bits
-			8		:	buffer
-			9-10	:	OFFSET: 9 top 8 bits, 10 lower 8 bits
-			11		:	buffer
-			12-13	:	op_code: indicates to the gen when to produce waveform
-			14-15	:	buffer
+			0		: 	Command
+			1		:	Buffer
+			2		:	Freq MSB
+			3		:	Freq LSB
+			4		:	Buffer
+			5		:	Gain
+			6		:	Buffer
+			7		:	Offset Sign
+			8		:	Offset
+			9		:	Buffer
+			10		:	Op_Code
+			11		:	Buffer
+			12		:	Channel 1 Shift
+			13		:	Channel 2 Shift
+			14		:	Channel 3 Shift
+			15		: 	Buffer	
 			]
 			'''
+		bufferVal = 0
 		
-		msg = [0,0]
-		buf = 0
+		#Add Buffer after Command
+		msg = [bufferVal]
 		if debug:
 			print(msg)
+			
+		#Add Freq and Buffer
 		MSB,LSB = self.dataConversionForTransfer(freq)
 		msg.append(MSB)
 		msg.append(LSB)	
-		msg.append(buf)
+		msg.append(bufferVal)
 		if debug:
 			print(msg)
+			
+		#Add Gain and Buffer
 		MSB,LSB = self.dataConversionForTransfer(int(gain*10)) #multiplied by 10 to avoid decimals
-		msg.append(MSB)
+		#msg.append(MSB) nothing should be in this bit gain is 0-1 (0-10 after *10)
 		msg.append(LSB)	
-		msg.append(buf)
+		msg.append(bufferVal)
 		if debug:
 			print(msg)
+			
+		#Add Offset Sign, Offset Value, and Buffer
+		if(offset<0):
+			msg.append(1)	#offset is negative
+		else:
+			msg.append(0)
 		MSB,LSB = self.dataConversionForTransfer(int(offset*10)) #multiplied by 10 to avoid decimals
-		msg.append(MSB)
+		#msg.append(MSB) #nothing should be in this value offset is -1 <-> 1
 		msg.append(LSB)	
-		msg.append(buf)
+		msg.append(bufferVal)
 		if debug:
 			print(msg)
+			
+		#Add Op_code and Buffer
 		MSB,LSB = self.dataConversionForTransfer(op_code)
-		msg.append(MSB)
+		#msg.append(MSB) Nothing in this bit
 		msg.append(LSB)	
-		msg.append(buf)
-		msg.append(buf)
+		msg.append(bufferVal)
+		if debug:
+			print(msg)
+		
+		#Add channel 1-3 shifts and Buffer
+		msg.append(self.channelShiftToCode(self.channel_1_shift_value))
+		msg.append(self.channelShiftToCode(self.channel_2_shift_value))
+		msg.append(self.channelShiftToCode(self.channel_3_shift_value))
+		msg.append(bufferVal)
 		if debug:
 			print(msg)
 			print(len(msg))
 		
 		return msg
+		
 		
 	def closeEvent(self,event):
 		self.bus.close()
