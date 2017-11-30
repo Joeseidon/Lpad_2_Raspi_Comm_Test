@@ -106,7 +106,7 @@ class MyWindow(QtGui.QMainWindow):
 		self.Stopbtn.setEnabled(False)
 		self.Channel1_scale.setValue(0)
 		self.Channel2_scale.setValue(0)
-		self.Channel2_scale.setValue(0)
+		self.Channel3_scale.setValue(0)
 		self.op_code = 3
 		#set global update value
 		self.dataHasChanged = True
@@ -119,7 +119,7 @@ class MyWindow(QtGui.QMainWindow):
 		#set global update value
 		self.dataHasChanged = True
 		
-	def updateSysStatus(self, msg):
+	def updateSysStatus(self, msg=""):
 		self.ErrorLbl.setText("Status: "+msg)
 		
 	def startBtnPress(self):
@@ -181,6 +181,7 @@ class MyWindow(QtGui.QMainWindow):
 			print("Write Test Data: ",self.msg_data)
 		try:
 			self.bus.write_i2c_block_data(self.DEVICE_ADDR, self.command, self.msg_data)
+			self.updateSysStatus()
 		except:
 			self.updateSysStatus("I2C Write Error. Please Check Connections")
 			
