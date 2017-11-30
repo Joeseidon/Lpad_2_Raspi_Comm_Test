@@ -107,7 +107,7 @@ class MyWindow(QtGui.QMainWindow):
 		self.Channel1_scale.setValue(0)
 		self.Channel2_scale.setValue(0)
 		self.Channel2_scale.setValue(0)
-		self.op_code = 1
+		self.op_code = 3
 		#set global update value
 		self.dataHasChanged = True
 		
