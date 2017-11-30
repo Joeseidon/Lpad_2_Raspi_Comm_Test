@@ -30,7 +30,7 @@
         <item>
          <widget class="QLabel" name="label_4">
           <property name="text">
-           <string>Scale Channels</string>
+           <string>Offset Channels</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignHCenter|Qt::AlignTop</set>
