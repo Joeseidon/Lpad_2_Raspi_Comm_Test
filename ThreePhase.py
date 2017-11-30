@@ -119,7 +119,7 @@ class MyWindow(QtGui.QMainWindow):
 		#set global update value
 		self.dataHasChanged = True
 		
-	def updateSysStatus(self, msg=""):
+	def updateSysStatus(self, msg="Normal"):
 		self.ErrorLbl.setText("Status: "+msg)
 		
 	def startBtnPress(self):
