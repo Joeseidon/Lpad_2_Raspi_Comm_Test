@@ -98,7 +98,7 @@ class MyWindow(QtGui.QMainWindow):
 	
 	def resetGenData(self):
 		#reset 3 phase generator settings
-		self.FreqDial.setValue(1000)
+		self.FreqDial.setValue(10)
 		self.FreqLCD.display(self.freq)
 		self.OffsetInput.setValue(0.0)
 		self.GainInput.setValue(0.8)
