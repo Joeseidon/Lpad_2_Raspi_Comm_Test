@@ -1,7 +1,7 @@
 
 //#############################################################################
 //
-// FILE:   3ChSgenTest.c
+// FILE:   SignalAnalysisStation_ThreePhaseGen.c
 //
 // TITLE:  Three Phase Power Generator
 //
@@ -44,11 +44,14 @@
 //
 // Included Files
 //
+
 #include "F28x_Project.h"
 #include "sgen.h"         // Signal Generation Headerfile
 #include "driverlib.h"
 #include "device.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 //
 // Three Phase Gen Defines
@@ -62,6 +65,9 @@
 #define REFERENCE             REFERENCE_VDAC
 #define CPUFREQ_MHZ           200
 
+//
+// Three Phase Generator Modes
+//
 #define LINEAR_INT			  1
 #define NORMAL_GEN			  0
 #define PHASE_GEN_TYPE	      LINEAR_INT
@@ -104,14 +110,17 @@ SGENT_3 sgen = SGENT_3_DEFAULTS;
 #endif
 
 //Sgen Channel Value Storage
-Uint16 sgen_out1 = 0;
-Uint16 sgen_out2 = 0;
-Uint16 sgen_out3 = 0;
+int sgen_out1 = 0;
+int sgen_out2 = 0;
+int sgen_out3 = 0;
 
-int standardChOffsets[3] = {30000,32768,35000};
+uint16_t standardChOffsets[3] = {30000,32768,35534};
 uint16_t channel1_offset = 32768;
 uint16_t channel2_offset = 32768;
 uint16_t channel3_offset = 32768;
+float channel1_mult = 1.0;
+float channel2_mult = 1.0;
+float channel3_mult = 1.0;
 
 //I2C Globals
 uint16_t rData[BUFFER_SIZE];    // Send data buffer
@@ -127,11 +136,12 @@ static inline void setOffset(void);
 void configureDAC(void);
 void configureWaveform(void);
 interrupt void cpu_timer0_isr(void);
-void disableSignalGen(void);
-void channelShiftCodeToValue(int ch, uint16_t code);
+static inline void disableSignalGen(void);
+static inline void enableSignalGen(void);
+static inline void channelOffsetDecode(int ch, uint16_t code);
 
 void initI2CFIFO(void);
-inline void decodeMsg(void); 
+static inline void decodeMsg(void); 
 __interrupt void i2cFIFOISR(void);
 
 //
@@ -139,7 +149,7 @@ __interrupt void i2cFIFOISR(void);
 //
 void main(void)
 {
-    
+
 //
 // Initialize device clock and peripherals
 //
@@ -256,6 +266,7 @@ void main(void)
             disableSignalGen();
             //put system in low power mode and wait for wake commnad(Start)
             while(op_code != Start){
+                //TODO:
                 ;
             }
         }
@@ -302,7 +313,7 @@ static inline void setOffset(void)
 //
 // enableSignalGen - Enables DAC outputs and starts generators timer interrupt
 //
-void enableSignalGen(void)
+static inline void enableSignalGen(void)
 {
     Interrupt_enable(INT_TIMER0);
     //reset DACs and enable
@@ -319,7 +330,7 @@ void enableSignalGen(void)
 //
 // disableSignalGen - Disables DAC outputs to avoid noise on the lines when sig not generated
 //
-void disableSignalGen(void)
+static inline void disableSignalGen(void)
 {
     Interrupt_disable(INT_TIMER0);
     //reset DACs and disable
@@ -388,11 +399,30 @@ interrupt void cpu_timer0_isr(void)
 	//
     // Scale next sine value
     //
-    sgen_out1 = (sgen.out1 + channel1_offset) >> 4;
-    sgen_out2 = (sgen.out2 + channel2_offset) >> 4;
-    sgen_out3 = (sgen.out3 + channel3_offset) >> 4;
-
-	//
+    sgen_out1 = ((sgen.out1 + channel1_offset) >> 4);
+    sgen_out2 = ((sgen.out2 + channel2_offset) >> 4);
+    sgen_out3 = ((sgen.out3 + channel3_offset) >> 4);
+    
+    //atempting to provide individual channel modification
+   /* if(sgen.out1 < 0){
+        sgen_out1 += (sgen_out1*(1-channel1_mult));
+    }
+    else{
+        sgen_out1 -= (sgen_out1*(1-channel1_mult));
+    }
+    if(sgen.out2 < 0){
+        sgen_out2 += (sgen_out2*(1-channel2_mult));
+    }
+    else{
+        sgen_out2 -= (sgen_out2*(1-channel2_mult));
+    }
+    if(sgen.out3 < 0){
+        sgen_out3 += (sgen_out3*(1-channel3_mult));
+    }
+    else{
+        sgen_out3 -= (sgen_out3*(1-channel3_mult));
+    }*/
+    //
     // Compute next sine value
     //
     sgen.calc(&sgen);
@@ -409,8 +439,10 @@ interrupt void cpu_timer0_isr(void)
 void initI2CFIFO()
 {
     //
-    //SDA and SCL pin config
+    //SDA and SCL pin config with pull-up resistors
     //
+    GPIO_setPadConfig(42, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setPadConfig(43, GPIO_PIN_TYPE_PULLUP);
     GPIO_SetupPinMux(42, GPIO_MUX_CPU1, 6);
     GPIO_SetupPinMux(43, GPIO_MUX_CPU1, 6);
 
@@ -433,8 +465,6 @@ void initI2CFIFO()
     I2C_clearInterruptStatus(I2CA_BASE, I2C_INT_RXFF | I2C_INT_TXFF);
     I2C_setFIFOInterruptLevel(I2CA_BASE, I2C_FIFO_TX16, I2C_FIFO_RX16);
     I2C_enableInterrupt(I2CA_BASE, I2C_INT_RXFF);
-    //TX disabled in the hope that everything can be accomplished without
-            //I2C_enableInterrupt(I2CA_BASE, I2C_INT_RXFF | I2C_INT_TXFF);
 
     //
     // Configuration complete. Enable the module.
@@ -470,7 +500,7 @@ void initI2CFIFO()
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
 }
 
-void decodeMsg(void)
+static inline void decodeMsg(void)
 {
     //define temp variables 
     uint16_t msbs = 0;
@@ -487,15 +517,15 @@ void decodeMsg(void)
     waveformGain = temp/10.0; //accounts for alterations made during sending from master
     
     //determine offset
-    temp = rData[8];
-    if(rData[7] == 1)   //account for negative offset
+    temp = rData[7];
+    if(rData[6] == 1)   //account for negative offset
     {
         temp=temp*-1;
     }
     waveformOffset = temp/10.0;//accounts for alterations made during sending from master
     
     //determine op_code
-    temp = rData[10];
+    temp = rData[8];
     switch(temp)
     {
         case 1:
@@ -516,12 +546,19 @@ void decodeMsg(void)
     }
     
     //determine channel shifts
-    channelShiftDecode(1, rData[12]);
-    channelShiftDecode(2, rData[13]);
-    channelShiftDecode(3, rData[14]);
+    channelOffsetDecode(1, rData[9]);
+    channelOffsetDecode(2, rData[10]);
+    channelOffsetDecode(3, rData[11]);
+    
+    temp = rData[12];
+    channel1_mult = temp/10.0;
+    temp = rData[13];
+    channel2_mult = temp/10.0;
+    temp = rData[14];
+    channel3_mult = temp/10.0;
 }
 
-void channelShiftDecode(int ch, uint16_t code)
+static inline void channelOffsetDecode(int ch, uint16_t code)
 {
     switch(ch){
         case 1:
@@ -539,4 +576,5 @@ void channelShiftDecode(int ch, uint16_t code)
 //
 // End of File
 //
+
 
