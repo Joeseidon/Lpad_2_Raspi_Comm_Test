@@ -328,9 +328,9 @@ class MyWindow(QtGui.QMainWindow):
 			print(msg)
 			
 		#Add channel 1-3 Multipliers and Buffer
-		msg.append(int(self.channel_1_mult_value * 10))
-		msg.append(int(self.channel_2_mult_value * 10))
-		msg.append(int(self.channel_3_mult_value * 10))
+		msg.append(int(self.channel_1_mult_value * 100))
+		msg.append(int(self.channel_2_mult_value * 100))
+		msg.append(int(self.channel_3_mult_value * 100))
 		msg.append(bufferVal)
 		if debug:
 			print(msg)
