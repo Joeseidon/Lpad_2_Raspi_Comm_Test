@@ -65,7 +65,7 @@ class MyWindow(QtGui.QMainWindow):
 		self.update_freq = 1000 #time in msec for timer experation
 		self.msg_data = []
 		self.dataHasChanged = False
-		
+				
 		#Connect GUI features to functionality
 			#connect frequency input
 		self.Increase_Freq_Btn.clicked.connect(self.increaseFreq)
@@ -246,6 +246,38 @@ class MyWindow(QtGui.QMainWindow):
 			return 1
 		elif(channel_val==1):
 			return 2
+			
+	def generateSignData(self):
+			#Establish ThreePhaseSign (8-bit word used to pass data sign information)
+			#If flag == 1 then the corresponding data is negative
+			'''ThreePhaseSign
+			BIT		:		Data
+			1		:	General Offset 
+			2		:	Channel 1 Offset
+			3		:	Channel 2 Offset
+			4		:	Channel	3 Offset
+			5		:	Channel	1 Gain
+			6		:	Channel	2 Gain
+			7		:	Channel 3 Gain
+			8		:		RSV			'''
+			ThreePhaseSign = 0x00
+			
+			if(self.offset < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x01
+			if(self.channel_1_shift_value < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x02
+			if(self.channel_2_shift_value < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x04
+			if(self.channel_3_shift_value < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x08
+			if(self.channel_1_mult_value < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x10
+			if(self.channel_2_mult_value < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x20
+			if(self.channel_3_mult_value < 0):
+				ThreePhaseSign = ThreePhaseSign | 0x40
+			print("Sign Word: ",bin(ThreePhaseSign))
+			return ThreePhaseSign
 	
 	def createMsg(self,
 					freq			= 10, 
@@ -268,7 +300,7 @@ class MyWindow(QtGui.QMainWindow):
 			3		:	Freq LSB
 			4		:	Buffer
 			5		:	Gain
-			6		:	Offset Sign
+			6		:	ThreePhaseSign
 			7		:	Offset
 			8		:	Op_Code
 			9		:	Channel 1 Offset
@@ -303,10 +335,12 @@ class MyWindow(QtGui.QMainWindow):
 			print(msg)
 			
 		#Add Offset Sign, Offset Value, and Buffer
-		if(offset<0):
+		'''if(offset<0):
 			msg.append(1)	#offset is negative
 		else:
-			msg.append(0)
+			msg.append(0)'''
+		ThreePhaseSignData = self.generateSignData()
+		msg.append(ThreePhaseSignData)
 		MSB,LSB = self.dataConversionForTransfer(int(offset*10)) #multiplied by 10 to avoid decimals
 		#msg.append(MSB) #nothing should be in this value offset is -1 <-> 1
 		msg.append(LSB)	
@@ -336,6 +370,7 @@ class MyWindow(QtGui.QMainWindow):
 			print(msg)
 			print(len(msg))
 		
+		self.generateSignData()
 		return msg
 		
 		
