@@ -49,17 +49,17 @@ class MyWindow(QtGui.QMainWindow):
 		self.move(qr.topLeft())
 		
 		#Create Vars to hold output values
-		self.freq = 10 #hz 
-		self.freqStep = 10
+		self.freq = 3 #hz 
+		self.freqStep = 1
 		self.gain = 0.8003
 		self.offset = 0
 		self.op_code = 1 #idle
 		self.channel_1_shift_value = 0
 		self.channel_2_shift_value = 0
 		self.channel_3_shift_value = 0
-		self.channel_1_mult_value = 1.0
-		self.channel_2_mult_value = 1.0
-		self.channel_3_mult_value = 1.0
+		self.channel_1_mult_value = 0.0
+		self.channel_2_mult_value = 0.0
+		self.channel_3_mult_value = 0.0
 		
 		#Create necessary local vars
 		self.update_freq = 1000 #time in msec for timer experation
@@ -126,7 +126,7 @@ class MyWindow(QtGui.QMainWindow):
 		
 	def resetGenData(self):
 		#reset 3 phase generator settings
-		self.FreqDial.setValue(10)
+		self.FreqDial.setValue(3)
 		self.FreqLCD.display(self.freq)
 		self.OffsetInput.setValue(0.0)
 		self.GainInput.setValue(0.8)
@@ -135,9 +135,9 @@ class MyWindow(QtGui.QMainWindow):
 		self.Channel1_offset.setValue(0)
 		self.Channel2_offset.setValue(0)
 		self.Channel3_offset.setValue(0)
-		self.Channel1_mult.setValue(1.0)
-		self.Channel2_mult.setValue(1.0)
-		self.Channel3_mult.setValue(1.0)
+		self.Channel1_mult.setValue(0.0)
+		self.Channel2_mult.setValue(0.0)
+		self.Channel3_mult.setValue(0.0)
 		self.op_code = 3
 		#set global update value
 		self.dataHasChanged = True
@@ -255,9 +255,9 @@ class MyWindow(QtGui.QMainWindow):
 					channel1_shift 	= 0,
 					channel2_shift 	= 0,
 					channel3_shift 	= 0,
-					channel1_mult 	= 1.0,
-					channel2_mult 	= 1.0,
-					channel3_mult 	= 1.0,
+					channel1_mult 	= 0.0,
+					channel2_mult 	= 0.0,
+					channel3_mult 	= 0.0,
 					debug			= False):
 		#limited to 8bits transfered in each index(i.e: [0xFF,0x43 ....])			
 		'''MSG structure:
