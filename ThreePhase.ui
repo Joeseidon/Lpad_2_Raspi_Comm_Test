@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>922</width>
-    <height>337</height>
+    <height>346</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,14 +44,17 @@
             <height>40</height>
            </size>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
           <property name="decimals">
-           <number>1</number>
+           <number>2</number>
           </property>
           <property name="maximum">
            <double>1.000000000000000</double>
           </property>
           <property name="singleStep">
-           <double>0.100000000000000</double>
+           <double>0.010000000000000</double>
           </property>
           <property name="value">
            <double>0.800000000000000</double>
@@ -89,8 +92,11 @@
             <height>40</height>
            </size>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
           <property name="decimals">
-           <number>1</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-1.000000000000000</double>
@@ -99,7 +105,7 @@
            <double>1.000000000000000</double>
           </property>
           <property name="singleStep">
-           <double>0.100000000000000</double>
+           <double>0.010000000000000</double>
           </property>
          </widget>
         </item>
@@ -324,11 +330,14 @@
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="5" column="3" alignment="Qt::AlignHCenter">
            <widget class="QDoubleSpinBox" name="Channel3_mult">
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
             <property name="maximum">
              <double>1.000000000000000</double>
             </property>
             <property name="singleStep">
-             <double>0.100000000000000</double>
+             <double>0.010000000000000</double>
             </property>
             <property name="value">
              <double>0.000000000000000</double>
@@ -339,16 +348,6 @@
            <widget class="Line" name="line_9">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QSpinBox" name="Channel2_offset">
-            <property name="minimum">
-             <number>-1</number>
-            </property>
-            <property name="maximum">
-             <number>1</number>
             </property>
            </widget>
           </item>
@@ -371,11 +370,14 @@
           </item>
           <item row="1" column="3" alignment="Qt::AlignHCenter">
            <widget class="QDoubleSpinBox" name="Channel1_mult">
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
             <property name="maximum">
              <double>1.000000000000000</double>
             </property>
             <property name="singleStep">
-             <double>0.100000000000000</double>
+             <double>0.010000000000000</double>
             </property>
             <property name="value">
              <double>0.000000000000000</double>
@@ -384,24 +386,17 @@
           </item>
           <item row="3" column="3" alignment="Qt::AlignHCenter">
            <widget class="QDoubleSpinBox" name="Channel2_mult">
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
             <property name="maximum">
              <double>1.000000000000000</double>
             </property>
             <property name="singleStep">
-             <double>0.100000000000000</double>
+             <double>0.010000000000000</double>
             </property>
             <property name="value">
              <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QSpinBox" name="Channel3_offset">
-            <property name="minimum">
-             <number>-1</number>
-            </property>
-            <property name="maximum">
-             <number>1</number>
             </property>
            </widget>
           </item>
@@ -458,16 +453,6 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QSpinBox" name="Channel1_offset">
-            <property name="minimum">
-             <number>-1</number>
-            </property>
-            <property name="maximum">
-             <number>1</number>
-            </property>
-           </widget>
-          </item>
           <item row="3" column="2">
            <widget class="Line" name="line_8">
             <property name="orientation">
@@ -513,6 +498,45 @@
              </size>
             </property>
            </spacer>
+          </item>
+          <item row="5" column="1" alignment="Qt::AlignHCenter">
+           <widget class="QDoubleSpinBox" name="Channel3_offset">
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" alignment="Qt::AlignHCenter">
+           <widget class="QDoubleSpinBox" name="Channel2_offset">
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" alignment="Qt::AlignHCenter">
+           <widget class="QDoubleSpinBox" name="Channel1_offset">
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -633,27 +657,6 @@
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QLabel" name="label_10">
-   <property name="geometry">
-    <rect>
-     <x>540</x>
-     <y>330</y>
-     <width>228</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-     <underline>false</underline>
-    </font>
-   </property>
-   <property name="text">
-    <string>Channel Adjustments:</string>
-   </property>
   </widget>
  </widget>
  <resources/>

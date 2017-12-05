@@ -280,7 +280,7 @@ class MyWindow(QtGui.QMainWindow):
 			return ThreePhaseSign
 	
 	def createMsg(self,
-					freq			= 10, 
+					freq			= 3, 
 					gain			= 0.8003, 
 					offset			= 0, 
 					op_code			= 3,
@@ -328,20 +328,16 @@ class MyWindow(QtGui.QMainWindow):
 			print(msg)
 			
 		#Add Gain and Buffer
-		MSB,LSB = self.dataConversionForTransfer(int(gain*10)) #multiplied by 10 to avoid decimals
+		MSB,LSB = self.dataConversionForTransfer(int(gain*100)) #multiplied by 100 to avoid decimals
 		#msg.append(MSB) nothing should be in this bit gain is 0-1 (0-10 after *10)
 		msg.append(LSB)	
 		if debug:
 			print(msg)
 			
-		#Add Offset Sign, Offset Value, and Buffer
-		'''if(offset<0):
-			msg.append(1)	#offset is negative
-		else:
-			msg.append(0)'''
+		#Add All Sign Data, general offset Value, and Buffer
 		ThreePhaseSignData = self.generateSignData()
 		msg.append(ThreePhaseSignData)
-		MSB,LSB = self.dataConversionForTransfer(int(offset*10)) #multiplied by 10 to avoid decimals
+		MSB,LSB = self.dataConversionForTransfer(int(offset*100)) #multiplied by 100 to avoid decimals
 		#msg.append(MSB) #nothing should be in this value offset is -1 <-> 1
 		msg.append(LSB)	
 		if debug:
@@ -355,16 +351,29 @@ class MyWindow(QtGui.QMainWindow):
 			print(msg)
 		
 		#Add channel 1-3 Offset
-		msg.append(self.channelShiftToCode(self.channel_1_shift_value))
-		msg.append(self.channelShiftToCode(self.channel_2_shift_value))
-		msg.append(self.channelShiftToCode(self.channel_3_shift_value))
+		MSB,LSB = self.dataConversionForTransfer(int(self.channel_1_shift_value * 100))
+		msg.append(LSB)
+		MSB,LSB = self.dataConversionForTransfer(int(self.channel_2_shift_value * 100))
+		msg.append(LSB)
+		MSB,LSB = self.dataConversionForTransfer(int(self.channel_3_shift_value * 100))
+		msg.append(LSB)
+		'''
+		msg.append(int(self.channel_1_shift_value * 100))
+		msg.append(int(self.channel_2_shift_value * 100))
+		msg.append(int(self.channel_3_shift_value * 100))'''
 		if debug:
 			print(msg)
 			
 		#Add channel 1-3 Multipliers and Buffer
-		msg.append(int(self.channel_1_mult_value * 10))
-		msg.append(int(self.channel_2_mult_value * 10))
-		msg.append(int(self.channel_3_mult_value * 10))
+		MSB,LSB = self.dataConversionForTransfer(int(self.channel_1_mult_value * 100))
+		msg.append(LSB)
+		MSB,LSB = self.dataConversionForTransfer(int(self.channel_2_mult_value * 100))
+		msg.append(LSB)
+		MSB,LSB = self.dataConversionForTransfer(int(self.channel_3_mult_value * 100))
+		msg.append(LSB)
+		'''msg.append(int(self.channel_1_mult_value * 100))
+		msg.append(int(self.channel_2_mult_value * 100))
+		msg.append(int(self.channel_3_mult_value * 100))'''
 		msg.append(bufferVal)
 		if debug:
 			print(msg)
